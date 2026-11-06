@@ -1,12 +1,12 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IoMT 2024 â€” Network IDS</title>
+<title>IoMT 2024 — Network IDS</title>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
-/* â”€â”€ Reset & Variables â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Reset & Variables ─────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
@@ -37,7 +37,7 @@ html, body {
   overflow-x: hidden;
 }
 
-/* â”€â”€ Scanline overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Scanline overlay ──────────────────────────────────── */
 body::before {
   content: '';
   position: fixed;
@@ -53,7 +53,7 @@ body::before {
   z-index: 9999;
 }
 
-/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Header ────────────────────────────────────────────── */
 header {
   background: linear-gradient(135deg, #0a1628 0%, #0d1f35 50%, #061020 100%);
   border-bottom: 1px solid var(--border2);
@@ -118,10 +118,10 @@ header {
   color: var(--muted);
 }
 
-/* â”€â”€ Main layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Main layout ───────────────────────────────────────── */
 main { padding: 24px 32px; max-width: 1600px; margin: 0 auto; }
 
-/* â”€â”€ Stat cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Stat cards ────────────────────────────────────────── */
 .stats-row {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
@@ -170,7 +170,7 @@ main { padding: 24px 32px; max-width: 1600px; margin: 0 auto; }
   text-transform: uppercase;
 }
 
-/* â”€â”€ Grid layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Grid layout ───────────────────────────────────────── */
 .grid-2 {
   display: grid;
   grid-template-columns: 1fr 340px;
@@ -184,7 +184,7 @@ main { padding: 24px 32px; max-width: 1600px; margin: 0 auto; }
   margin-bottom: 20px;
 }
 
-/* â”€â”€ Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Panel ─────────────────────────────────────────────── */
 .panel {
   background: var(--bg2);
   border: 1px solid var(--border);
@@ -215,7 +215,7 @@ main { padding: 24px 32px; max-width: 1600px; margin: 0 auto; }
   color: var(--muted);
 }
 
-/* â”€â”€ Flow Feed table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Flow Feed table ───────────────────────────────────── */
 .feed-wrap {
   max-height: 460px;
   overflow-y: auto;
@@ -259,7 +259,7 @@ tbody td.mac  { color: var(--muted);  font-size: 10px; }
 tbody td.time { color: var(--muted);  font-size: 11px; }
 tbody td.proto { color: var(--yellow); font-size: 11px; }
 
-/* â”€â”€ Prediction badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Prediction badge ──────────────────────────────────── */
 .pred {
   display: inline-block;
   padding: 2px 8px;
@@ -287,7 +287,7 @@ tbody td.proto { color: var(--yellow); font-size: 11px; }
 .threat.medium   { color: var(--yellow); background: rgba(255,215,0,0.1); }
 .threat.none     { color: var(--muted);  background: transparent; }
 
-/* â”€â”€ Attack distribution bar chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Attack distribution bar chart ────────────────────── */
 .dist-panel { padding: 18px; }
 .dist-row { margin-bottom: 14px; }
 .dist-label {
@@ -314,7 +314,7 @@ tbody td.proto { color: var(--yellow); font-size: 11px; }
 .fill-mirai { background: linear-gradient(90deg, var(--purple), #d4a0ff); }
 .fill-recon { background: linear-gradient(90deg, var(--yellow), #ffe066); }
 
-/* â”€â”€ Timeline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Timeline ──────────────────────────────────────────── */
 .timeline-wrap { max-height: 280px; overflow-y: auto; padding: 12px 16px; }
 .timeline-item {
   display: flex; gap: 12px; align-items: flex-start;
@@ -340,7 +340,7 @@ tbody td.proto { color: var(--yellow); font-size: 11px; }
 .timeline-time   { font-family: var(--mono); font-size: 10px; color: var(--muted); }
 .timeline-meta   { font-family: var(--mono); font-size: 10px; color: var(--muted); }
 
-/* â”€â”€ System info panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── System info panel ─────────────────────────────────── */
 .sysinfo { padding: 16px 18px; }
 .sysinfo-row {
   display: flex; justify-content: space-between;
@@ -352,7 +352,7 @@ tbody td.proto { color: var(--yellow); font-size: 11px; }
 .sysinfo-key   { color: var(--muted); font-family: var(--mono); }
 .sysinfo-val   { color: var(--accent); font-family: var(--mono); text-align: right; }
 
-/* â”€â”€ Empty state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Empty state ───────────────────────────────────────── */
 .empty-state {
   padding: 40px;
   text-align: center;
@@ -362,13 +362,13 @@ tbody td.proto { color: var(--yellow); font-size: 11px; }
   letter-spacing: 1px;
 }
 
-/* â”€â”€ Confidence bar inline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Confidence bar inline ─────────────────────────────── */
 .conf-wrap { display: flex; align-items: center; gap: 7px; }
 .conf-val  { font-size: 11px; color: var(--text); min-width: 36px; text-align: right; }
 .conf-bar  { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; min-width: 40px; }
 .conf-fill { height: 100%; border-radius: 2px; background: var(--green); transition: width 0.4s; }
 
-/* â”€â”€ Responsive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Responsive ─────────────────────────────────────────── */
 @media (max-width: 1200px) {
   .stats-row { grid-template-columns: repeat(3, 1fr); }
   .grid-2    { grid-template-columns: 1fr; }
@@ -383,16 +383,16 @@ tbody td.proto { color: var(--yellow); font-size: 11px; }
 </head>
 <body>
 
-<!-- â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<!-- ── Header ──────────────────────────────────────────────── -->
 <header>
   <div class="header-left">
-    <div class="shield-icon">â¬¡</div>
+    <div class="shield-icon">⬡</div>
     <div class="header-title">
       <h1>IoMT Network IDS</h1>
-      <p>ESP32-S3 Â· LightGBM â†’ TFLite Â· IoMT 2024 Dataset Â· 26 Flow Features</p>
+      <p>ESP32-S3 · LightGBM → TFLite · IoMT 2024 Dataset · 26 Flow Features</p>
     </div>
   </div>
-  <div class="header-right"><a href="index.html" style="color:var(--accent); font-family:var(--mono); font-size:12px; text-decoration:none; border:1px solid var(--border); padding:6px 14px; border-radius:4px; transition:all 0.2s;">? Project Overview</a>
+  <div class="header-right"><a href="index.html" style="color:var(--accent); font-family:var(--mono); font-size:12px; text-decoration:none; border:1px solid var(--border); padding:6px 14px; border-radius:4px; display:inline-flex; align-items:center; gap:6px;">&larr; Project Overview</a>
     <div class="live-badge">
       <div class="live-dot"></div>
       LIVE MONITORING
@@ -401,7 +401,7 @@ tbody td.proto { color: var(--yellow); font-size: 11px; }
   </div>
 </header>
 
-<!-- â”€â”€ Main â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<!-- ── Main ────────────────────────────────────────────────── -->
 <main>
 
   <!-- Stat cards -->
@@ -438,7 +438,7 @@ tbody td.proto { color: var(--yellow); font-size: 11px; }
     <!-- Live flow feed -->
     <div class="panel">
       <div class="panel-header">
-        <span class="panel-title">â¬¡ Live Flow Feed</span>
+        <span class="panel-title">⬡ Live Flow Feed</span>
         <span class="panel-badge" id="feedCount">0 flows</span>
       </div>
       <div class="feed-wrap">
@@ -506,7 +506,7 @@ tbody td.proto { color: var(--yellow); font-size: 11px; }
           </div>
           <div class="sysinfo-row">
             <span class="sysinfo-key">Model</span>
-            <span class="sysinfo-val">LightGBM â†’ TFLite</span>
+            <span class="sysinfo-val">LightGBM → TFLite</span>
           </div>
           <div class="sysinfo-row">
             <span class="sysinfo-key">Dataset</span>
@@ -581,7 +581,7 @@ tbody td.proto { color: var(--yellow); font-size: 11px; }
 
 </main>
 
-<!-- â”€â”€ JavaScript â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<!-- ── JavaScript ───────────────────────────────────────────── -->
 <script>
 const POLL_MS = 3000;
 
@@ -649,7 +649,10 @@ function updateStats(stats) {
 
 function updateFeed(events) {
   el('feedCount').textContent = events.length + ' flows';
-  if (!events.length) return;
+  if (!events.length) {
+    el('feedBody').innerHTML = '<tr><td colspan="12" style="text-align:center; color:var(--muted); padding:35px; font-family:var(--mono); font-size:13px;">Waiting for real ESP32 telemetry feed...</td></tr>';
+    return;
+  }
 
   const rows = events.map(e => {
     const pc = predClass(e.prediction);
@@ -695,7 +698,7 @@ function updateTimeline(timeline) {
           <span class="timeline-attack">${t.prediction}</span>
           <span class="timeline-time">${t.time}</span>
         </div>
-        <div class="timeline-meta">${t.src_ip} Â· ${t.confidence}% confidence Â· ${t.threat}</div>
+        <div class="timeline-meta">${t.src_ip} · ${t.confidence}% confidence · ${t.threat}</div>
       </div>
     </div>`;
   }).join('');
@@ -703,78 +706,20 @@ function updateTimeline(timeline) {
   el('timelineBody').innerHTML = items;
 }
 
-// ── Live Simulation Fallback (for GitHub Pages static hosting) ──
-let simStats = { total_flows: 1420, total_attacks: 342, benign: 1078, DDoS: 114, DoS: 88, Mirai: 92, Recon: 48 };
-let simEvents = [];
-let simTimeline = [];
-const attackPool = [
-  { pred: 'BenignTraffic', threat: 'NONE', confMin: 97.2, confMax: 99.8, proto: 'MQTT' },
-  { pred: 'BenignTraffic', threat: 'NONE', confMin: 96.5, confMax: 99.4, proto: 'TCP' },
-  { pred: 'DoS', threat: 'HIGH', confMin: 95.1, confMax: 98.7, proto: 'TCP' },
-  { pred: 'DDoS', threat: 'CRITICAL', confMin: 96.8, confMax: 99.9, proto: 'UDP' },
-  { pred: 'Mirai', threat: 'CRITICAL', confMin: 97.4, confMax: 99.6, proto: 'TCP' },
-  { pred: 'Recon', threat: 'MEDIUM', confMin: 94.0, confMax: 97.8, proto: 'TCP' }
-];
-const simIPs = ['192.168.1.104', '192.168.1.142', '10.0.0.18', '172.16.0.7', '192.168.1.215'];
-
-function generateSimEvent() {
-  const now = new Date().toTimeString().split(' ')[0];
-  const item = attackPool[Math.floor(Math.random() * attackPool.length)];
-  const conf = +(item.confMin + Math.random() * (item.confMax - item.confMin)).toFixed(1);
-  const src = simIPs[Math.floor(Math.random() * simIPs.length)];
-  
-  simStats.total_flows++;
-  if (item.pred === 'BenignTraffic') {
-    simStats.benign++;
-  } else {
-    simStats.total_attacks++;
-    simStats[item.pred] = (simStats[item.pred] || 0) + 1;
-    simTimeline.unshift({ time: now, prediction: item.pred, confidence: conf, src_ip: src, threat: item.threat });
-    if (simTimeline.length > 25) simTimeline.pop();
-  }
-
-  simEvents.unshift({
-    time: now, prediction: item.pred, confidence: conf, threat: item.threat,
-    src_ip: src, dst_ip: '192.168.1.1',
-    src_mac: 'bc:24:11:' + Math.floor(Math.random()*90+10) + ':8a:ff',
-    dst_mac: 'ff:ff:ff:ff:ff:ff',
-    protocol: item.proto,
-    num_packets: Math.floor(Math.random() * 200 + 10),
-    duration_s: +(Math.random() * 0.45).toFixed(3),
-    syn_count: item.pred === 'DoS' ? Math.floor(Math.random()*150+50) : 0,
-    ack_count: 10, fin_count: 0, rst_count: 0,
-    tot_size: Math.floor(Math.random() * 15000 + 500),
-    avg_pkt: +(Math.random() * 100 + 40).toFixed(1)
-  });
-  if (simEvents.length > 40) simEvents.pop();
-
-  return { stats: simStats, events: simEvents, timeline: simTimeline, updated: now };
-}
-
-// Pre-fill simulation data
-for(let i=0; i<15; i++) { generateSimEvent(); }
-
 async function poll() {
   try {
     const res  = await fetch('/iomt_data');
-    if (res.ok) {
-      const data = await res.json();
-      el('updatedTime').textContent = 'Updated: ' + data.updated;
-      el('sumUpdated').textContent  = data.updated;
-      updateStats(data.stats);
-      updateFeed(data.events);
-      updateTimeline(data.timeline);
-      return;
-    }
-  } catch (err) {}
+    const data = await res.json();
 
-  // Seamless live simulation fallback for GitHub Pages
-  const sim = generateSimEvent();
-  el('updatedTime').textContent = 'Live Stream: ' + sim.updated;
-  el('sumUpdated').textContent  = sim.updated;
-  updateStats(sim.stats);
-  updateFeed(sim.events);
-  updateTimeline(sim.timeline);
+    el('updatedTime').textContent = 'Updated: ' + data.updated;
+    el('sumUpdated').textContent  = data.updated;
+
+    updateStats(data.stats);
+    updateFeed(data.events);
+    updateTimeline(data.timeline);
+  } catch (err) {
+    console.warn('Poll error:', err);
+  }
 }
 
 // Start polling
@@ -783,4 +728,3 @@ setInterval(poll, POLL_MS);
 </script>
 </body>
 </html>
-
