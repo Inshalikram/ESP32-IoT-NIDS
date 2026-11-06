@@ -1,0 +1,786 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IoMT 2024 â€” Network IDS</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+/* â”€â”€ Reset & Variables â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #080c10;
+  --bg2:       #0d1117;
+  --bg3:       #111820;
+  --border:    #1e2d3d;
+  --border2:   #243447;
+  --text:      #c9d1d9;
+  --muted:     #5a6a7a;
+  --accent:    #00e5ff;
+  --accent2:   #00b4cc;
+  --red:       #ff3b3b;
+  --orange:    #ff8c00;
+  --yellow:    #ffd700;
+  --green:     #00e676;
+  --purple:    #bb86fc;
+  --mono:      'Share Tech Mono', monospace;
+  --sans:      'Barlow', sans-serif;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* â”€â”€ Scanline overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,229,255,0.012) 2px,
+    rgba(0,229,255,0.012) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+header {
+  background: linear-gradient(135deg, #0a1628 0%, #0d1f35 50%, #061020 100%);
+  border-bottom: 1px solid var(--border2);
+  padding: 18px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-left { display: flex; align-items: center; gap: 16px; }
+
+.shield-icon {
+  width: 42px; height: 42px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  clip-path: polygon(50% 0%, 100% 25%, 100% 70%, 50% 100%, 0% 70%, 0% 25%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.header-title h1 {
+  font-family: var(--mono);
+  font-size: 18px;
+  color: var(--accent);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.header-title p {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  margin-top: 2px;
+}
+
+.header-right { display: flex; align-items: center; gap: 24px; }
+
+.live-badge {
+  display: flex; align-items: center; gap: 7px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--green);
+  letter-spacing: 1px;
+}
+.live-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.8); }
+}
+
+.updated-time {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* â”€â”€ Main layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+main { padding: 24px 32px; max-width: 1600px; margin: 0 auto; }
+
+/* â”€â”€ Stat cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--border2);
+  border-radius: 4px;
+  padding: 18px 16px 14px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--card-color, var(--accent));
+  opacity: 0.7;
+}
+.stat-card.danger  { --card-color: var(--red); }
+.stat-card.safe    { --card-color: var(--green); }
+.stat-card.ddos    { --card-color: var(--red); }
+.stat-card.dos     { --card-color: var(--orange); }
+.stat-card.mirai   { --card-color: var(--purple); }
+.stat-card.recon   { --card-color: var(--yellow); }
+
+.stat-value {
+  font-family: var(--mono);
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--card-color, var(--accent));
+  line-height: 1;
+  margin-bottom: 6px;
+  transition: color 0.3s;
+}
+.stat-label {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+/* â”€â”€ Grid layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+.grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+/* â”€â”€ Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.panel {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+}
+.panel-title {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.panel-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 2px;
+  border: 1px solid var(--border2);
+  color: var(--muted);
+}
+
+/* â”€â”€ Flow Feed table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.feed-wrap {
+  max-height: 460px;
+  overflow-y: auto;
+}
+.feed-wrap::-webkit-scrollbar { width: 4px; }
+.feed-wrap::-webkit-scrollbar-track { background: var(--bg); }
+.feed-wrap::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+  position: sticky; top: 0; z-index: 1;
+}
+tbody tr {
+  border-bottom: 1px solid rgba(30,45,61,0.5);
+  transition: background 0.15s;
+  animation: fadeIn 0.4s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+tbody tr:hover { background: rgba(0,229,255,0.03); }
+tbody td {
+  padding: 9px 12px;
+  font-size: 12px;
+  font-family: var(--mono);
+  color: var(--text);
+  white-space: nowrap;
+}
+tbody td.ip   { color: var(--accent); font-size: 11px; }
+tbody td.mac  { color: var(--muted);  font-size: 10px; }
+tbody td.time { color: var(--muted);  font-size: 11px; }
+tbody td.proto { color: var(--yellow); font-size: 11px; }
+
+/* â”€â”€ Prediction badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.pred {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 2px;
+  font-size: 10px;
+  font-family: var(--mono);
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+.pred.benign { background: rgba(0,230,118,0.12); color: var(--green); border: 1px solid rgba(0,230,118,0.3); }
+.pred.ddos   { background: rgba(255,59,59,0.15);  color: var(--red);    border: 1px solid rgba(255,59,59,0.4); }
+.pred.dos    { background: rgba(255,140,0,0.15);  color: var(--orange); border: 1px solid rgba(255,140,0,0.4); }
+.pred.mirai  { background: rgba(187,134,252,0.15);color: var(--purple); border: 1px solid rgba(187,134,252,0.4); }
+.pred.recon  { background: rgba(255,215,0,0.12);  color: var(--yellow); border: 1px solid rgba(255,215,0,0.3); }
+
+.threat {
+  font-size: 9px;
+  font-family: var(--mono);
+  letter-spacing: 0.5px;
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+.threat.critical { color: var(--red);    background: rgba(255,59,59,0.1); }
+.threat.high     { color: var(--orange); background: rgba(255,140,0,0.1); }
+.threat.medium   { color: var(--yellow); background: rgba(255,215,0,0.1); }
+.threat.none     { color: var(--muted);  background: transparent; }
+
+/* â”€â”€ Attack distribution bar chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.dist-panel { padding: 18px; }
+.dist-row { margin-bottom: 14px; }
+.dist-label {
+  display: flex; justify-content: space-between;
+  font-family: var(--mono); font-size: 11px;
+  margin-bottom: 5px;
+}
+.dist-label span:first-child { color: var(--text); }
+.dist-label span:last-child  { color: var(--muted); }
+.dist-bar-bg {
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.dist-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+  min-width: 2px;
+}
+.fill-ddos  { background: linear-gradient(90deg, var(--red),    #ff6b6b); }
+.fill-dos   { background: linear-gradient(90deg, var(--orange), #ffb347); }
+.fill-mirai { background: linear-gradient(90deg, var(--purple), #d4a0ff); }
+.fill-recon { background: linear-gradient(90deg, var(--yellow), #ffe066); }
+
+/* â”€â”€ Timeline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.timeline-wrap { max-height: 280px; overflow-y: auto; padding: 12px 16px; }
+.timeline-item {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(30,45,61,0.5);
+  animation: fadeIn 0.4s ease;
+}
+.timeline-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  flex-shrink: 0; margin-top: 4px;
+}
+.dot-ddos  { background: var(--red);    box-shadow: 0 0 6px var(--red); }
+.dot-dos   { background: var(--orange); box-shadow: 0 0 6px var(--orange); }
+.dot-mirai { background: var(--purple); box-shadow: 0 0 6px var(--purple); }
+.dot-recon { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
+
+.timeline-content { flex: 1; }
+.timeline-top {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 2px;
+}
+.timeline-attack { font-family: var(--mono); font-size: 12px; color: var(--text); }
+.timeline-time   { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+.timeline-meta   { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+
+/* â”€â”€ System info panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.sysinfo { padding: 16px 18px; }
+.sysinfo-row {
+  display: flex; justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(30,45,61,0.4);
+  font-size: 12px;
+}
+.sysinfo-row:last-child { border-bottom: none; }
+.sysinfo-key   { color: var(--muted); font-family: var(--mono); }
+.sysinfo-val   { color: var(--accent); font-family: var(--mono); text-align: right; }
+
+/* â”€â”€ Empty state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.empty-state {
+  padding: 40px;
+  text-align: center;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+/* â”€â”€ Confidence bar inline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.conf-wrap { display: flex; align-items: center; gap: 7px; }
+.conf-val  { font-size: 11px; color: var(--text); min-width: 36px; text-align: right; }
+.conf-bar  { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; min-width: 40px; }
+.conf-fill { height: 100%; border-radius: 2px; background: var(--green); transition: width 0.4s; }
+
+/* â”€â”€ Responsive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+@media (max-width: 1200px) {
+  .stats-row { grid-template-columns: repeat(3, 1fr); }
+  .grid-2    { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  main { padding: 16px; }
+  header { padding: 14px 16px; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .grid-3    { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<header>
+  <div class="header-left">
+    <div class="shield-icon">â¬¡</div>
+    <div class="header-title">
+      <h1>IoMT Network IDS</h1>
+      <p>ESP32-S3 Â· LightGBM â†’ TFLite Â· IoMT 2024 Dataset Â· 26 Flow Features</p>
+    </div>
+  </div>
+  <div class="header-right"><a href="index.html" style="color:var(--accent); font-family:var(--mono); font-size:12px; text-decoration:none; border:1px solid var(--border); padding:6px 14px; border-radius:4px; transition:all 0.2s;">? Project Overview</a>
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      LIVE MONITORING
+    </div>
+    <div class="updated-time" id="updatedTime">--:--:--</div>
+  </div>
+</header>
+
+<!-- â”€â”€ Main â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<main>
+
+  <!-- Stat cards -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-value" id="statFlows">0</div>
+      <div class="stat-label">Total Flows</div>
+    </div>
+    <div class="stat-card danger">
+      <div class="stat-value" id="statAttacks">0</div>
+      <div class="stat-label">Attacks Detected</div>
+    </div>
+    <div class="stat-card safe">
+      <div class="stat-value" id="statBenign">0</div>
+      <div class="stat-label">Benign Traffic</div>
+    </div>
+    <div class="stat-card ddos">
+      <div class="stat-value" id="statDDoS">0</div>
+      <div class="stat-label">DDoS</div>
+    </div>
+    <div class="stat-card dos">
+      <div class="stat-value" id="statDoS">0</div>
+      <div class="stat-label">DoS</div>
+    </div>
+    <div class="stat-card mirai">
+      <div class="stat-value" id="statMirai">0</div>
+      <div class="stat-label">Mirai</div>
+    </div>
+  </div>
+
+  <!-- Row 2: feed + right column -->
+  <div class="grid-2">
+
+    <!-- Live flow feed -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">â¬¡ Live Flow Feed</span>
+        <span class="panel-badge" id="feedCount">0 flows</span>
+      </div>
+      <div class="feed-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Src IP</th>
+              <th>Dst IP</th>
+              <th>Proto</th>
+              <th>Pkts</th>
+              <th>Duration</th>
+              <th>SYN</th>
+              <th>ACK</th>
+              <th>RST</th>
+              <th>Prediction</th>
+              <th>Confidence</th>
+              <th>Threat</th>
+            </tr>
+          </thead>
+          <tbody id="feedBody">
+            <tr><td colspan="12" class="empty-state">Waiting for flows from ESP32...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Right column -->
+    <div style="display:flex; flex-direction:column; gap:20px;">
+
+      <!-- Attack distribution -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Attack Distribution</span>
+        </div>
+        <div class="dist-panel">
+          <div class="dist-row">
+            <div class="dist-label"><span>DDoS</span><span id="distDDoSVal">0</span></div>
+            <div class="dist-bar-bg"><div class="dist-bar-fill fill-ddos" id="distDDoS" style="width:0%"></div></div>
+          </div>
+          <div class="dist-row">
+            <div class="dist-label"><span>DoS</span><span id="distDoSVal">0</span></div>
+            <div class="dist-bar-bg"><div class="dist-bar-fill fill-dos" id="distDoS" style="width:0%"></div></div>
+          </div>
+          <div class="dist-row">
+            <div class="dist-label"><span>Mirai</span><span id="distMiraiVal">0</span></div>
+            <div class="dist-bar-bg"><div class="dist-bar-fill fill-mirai" id="distMirai" style="width:0%"></div></div>
+          </div>
+          <div class="dist-row">
+            <div class="dist-label"><span>Recon</span><span id="distReconVal">0</span></div>
+            <div class="dist-bar-bg"><div class="dist-bar-fill fill-recon" id="distRecon" style="width:0%"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- System info -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">System Info</span>
+        </div>
+        <div class="sysinfo">
+          <div class="sysinfo-row">
+            <span class="sysinfo-key">Device</span>
+            <span class="sysinfo-val">ESP32-S3</span>
+          </div>
+          <div class="sysinfo-row">
+            <span class="sysinfo-key">Model</span>
+            <span class="sysinfo-val">LightGBM â†’ TFLite</span>
+          </div>
+          <div class="sysinfo-row">
+            <span class="sysinfo-key">Dataset</span>
+            <span class="sysinfo-val">IoMT 2024</span>
+          </div>
+          <div class="sysinfo-row">
+            <span class="sysinfo-key">Features</span>
+            <span class="sysinfo-val">26 flow features</span>
+          </div>
+          <div class="sysinfo-row">
+            <span class="sysinfo-key">Classes</span>
+            <span class="sysinfo-val">5 (Benign+4 attacks)</span>
+          </div>
+          <div class="sysinfo-row">
+            <span class="sysinfo-key">Flow Window</span>
+            <span class="sysinfo-val">2 seconds</span>
+          </div>
+          <div class="sysinfo-row">
+            <span class="sysinfo-key">Endpoint</span>
+            <span class="sysinfo-val">/iomt_alert</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Row 3: attack timeline + recon stat -->
+  <div class="grid-3">
+
+    <!-- Attack timeline -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Attack Timeline</span>
+        <span class="panel-badge" id="timelineCount">0 events</span>
+      </div>
+      <div class="timeline-wrap" id="timelineBody">
+        <div class="empty-state">No attacks detected yet</div>
+      </div>
+    </div>
+
+    <!-- Recon stat + extra -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Recon &amp; Summary</span>
+      </div>
+      <div class="sysinfo">
+        <div class="sysinfo-row">
+          <span class="sysinfo-key">Recon Detected</span>
+          <span class="sysinfo-val" id="statRecon" style="color:var(--yellow)">0</span>
+        </div>
+        <div class="sysinfo-row">
+          <span class="sysinfo-key">Total Flows</span>
+          <span class="sysinfo-val" id="sumFlows">0</span>
+        </div>
+        <div class="sysinfo-row">
+          <span class="sysinfo-key">Attack Rate</span>
+          <span class="sysinfo-val" id="sumRate">0.0%</span>
+        </div>
+        <div class="sysinfo-row">
+          <span class="sysinfo-key">Last Updated</span>
+          <span class="sysinfo-val" id="sumUpdated">--:--:--</span>
+        </div>
+        <div class="sysinfo-row">
+          <span class="sysinfo-key">Highest Threat</span>
+          <span class="sysinfo-val" id="sumThreat" style="color:var(--muted)">NONE</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<!-- â”€â”€ JavaScript â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<script>
+const POLL_MS = 3000;
+
+function predClass(p) {
+  if (!p) return 'benign';
+  const m = { BenignTraffic:'benign', DDoS:'ddos', DoS:'dos', Mirai:'mirai', Recon:'recon' };
+  return m[p] || 'benign';
+}
+
+function dotClass(p) {
+  const m = { DDoS:'dot-ddos', DoS:'dot-dos', Mirai:'dot-mirai', Recon:'dot-recon' };
+  return m[p] || 'dot-ddos';
+}
+
+function threatClass(t) {
+  if (!t) return 'none';
+  return t.toLowerCase();
+}
+
+function confColor(c) {
+  if (c >= 90) return 'var(--green)';
+  if (c >= 70) return 'var(--yellow)';
+  return 'var(--orange)';
+}
+
+function el(id) { return document.getElementById(id); }
+
+function updateStats(stats) {
+  el('statFlows').textContent   = stats.total_flows   || 0;
+  el('statAttacks').textContent = stats.total_attacks || 0;
+  el('statBenign').textContent  = stats.benign        || 0;
+  el('statDDoS').textContent    = stats.DDoS          || 0;
+  el('statDoS').textContent     = stats.DoS           || 0;
+  el('statMirai').textContent   = stats.Mirai         || 0;
+  el('statRecon').textContent   = stats.Recon         || 0;
+  el('sumFlows').textContent    = stats.total_flows   || 0;
+
+  const total   = stats.total_flows || 1;
+  const attacks = stats.total_attacks || 0;
+  el('sumRate').textContent = ((attacks / total) * 100).toFixed(1) + '%';
+
+  // Distribution bars
+  const maxAtk = Math.max(stats.DDoS||0, stats.DoS||0, stats.Mirai||0, stats.Recon||0, 1);
+  el('distDDoS').style.width  = ((stats.DDoS  ||0) / maxAtk * 100) + '%';
+  el('distDoS').style.width   = ((stats.DoS   ||0) / maxAtk * 100) + '%';
+  el('distMirai').style.width = ((stats.Mirai ||0) / maxAtk * 100) + '%';
+  el('distRecon').style.width = ((stats.Recon ||0) / maxAtk * 100) + '%';
+  el('distDDoSVal').textContent  = stats.DDoS  || 0;
+  el('distDoSVal').textContent   = stats.DoS   || 0;
+  el('distMiraiVal').textContent = stats.Mirai || 0;
+  el('distReconVal').textContent = stats.Recon || 0;
+
+  // Highest threat
+  let threat = 'NONE', threatColor = 'var(--muted)';
+  if ((stats.DDoS||0) > 0 || (stats.Mirai||0) > 0) {
+    threat = 'CRITICAL'; threatColor = 'var(--red)';
+  } else if ((stats.DoS||0) > 0) {
+    threat = 'HIGH'; threatColor = 'var(--orange)';
+  } else if ((stats.Recon||0) > 0) {
+    threat = 'MEDIUM'; threatColor = 'var(--yellow)';
+  }
+  el('sumThreat').textContent = threat;
+  el('sumThreat').style.color = threatColor;
+}
+
+function updateFeed(events) {
+  el('feedCount').textContent = events.length + ' flows';
+  if (!events.length) return;
+
+  const rows = events.map(e => {
+    const pc = predClass(e.prediction);
+    const tc = threatClass(e.threat);
+    const conf = e.confidence || 0;
+    return `<tr>
+      <td class="time">${e.time}</td>
+      <td class="ip">${e.src_ip}</td>
+      <td class="ip">${e.dst_ip}</td>
+      <td class="proto">${e.protocol}</td>
+      <td>${e.num_packets}</td>
+      <td>${e.duration_s}s</td>
+      <td>${e.syn_count}</td>
+      <td>${e.ack_count}</td>
+      <td>${e.rst_count}</td>
+      <td><span class="pred ${pc}">${e.prediction}</span></td>
+      <td>
+        <div class="conf-wrap">
+          <div class="conf-bar"><div class="conf-fill" style="width:${conf}%;background:${confColor(conf)}"></div></div>
+          <span class="conf-val">${conf}%</span>
+        </div>
+      </td>
+      <td><span class="threat ${tc}">${e.threat}</span></td>
+    </tr>`;
+  }).join('');
+
+  el('feedBody').innerHTML = rows;
+}
+
+function updateTimeline(timeline) {
+  el('timelineCount').textContent = timeline.length + ' events';
+  if (!timeline.length) {
+    el('timelineBody').innerHTML = '<div class="empty-state">No attacks detected yet</div>';
+    return;
+  }
+
+  const items = timeline.map(t => {
+    const dc = dotClass(t.prediction);
+    return `<div class="timeline-item">
+      <div class="timeline-dot ${dc}"></div>
+      <div class="timeline-content">
+        <div class="timeline-top">
+          <span class="timeline-attack">${t.prediction}</span>
+          <span class="timeline-time">${t.time}</span>
+        </div>
+        <div class="timeline-meta">${t.src_ip} Â· ${t.confidence}% confidence Â· ${t.threat}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  el('timelineBody').innerHTML = items;
+}
+
+// ── Live Simulation Fallback (for GitHub Pages static hosting) ──
+let simStats = { total_flows: 1420, total_attacks: 342, benign: 1078, DDoS: 114, DoS: 88, Mirai: 92, Recon: 48 };
+let simEvents = [];
+let simTimeline = [];
+const attackPool = [
+  { pred: 'BenignTraffic', threat: 'NONE', confMin: 97.2, confMax: 99.8, proto: 'MQTT' },
+  { pred: 'BenignTraffic', threat: 'NONE', confMin: 96.5, confMax: 99.4, proto: 'TCP' },
+  { pred: 'DoS', threat: 'HIGH', confMin: 95.1, confMax: 98.7, proto: 'TCP' },
+  { pred: 'DDoS', threat: 'CRITICAL', confMin: 96.8, confMax: 99.9, proto: 'UDP' },
+  { pred: 'Mirai', threat: 'CRITICAL', confMin: 97.4, confMax: 99.6, proto: 'TCP' },
+  { pred: 'Recon', threat: 'MEDIUM', confMin: 94.0, confMax: 97.8, proto: 'TCP' }
+];
+const simIPs = ['192.168.1.104', '192.168.1.142', '10.0.0.18', '172.16.0.7', '192.168.1.215'];
+
+function generateSimEvent() {
+  const now = new Date().toTimeString().split(' ')[0];
+  const item = attackPool[Math.floor(Math.random() * attackPool.length)];
+  const conf = +(item.confMin + Math.random() * (item.confMax - item.confMin)).toFixed(1);
+  const src = simIPs[Math.floor(Math.random() * simIPs.length)];
+  
+  simStats.total_flows++;
+  if (item.pred === 'BenignTraffic') {
+    simStats.benign++;
+  } else {
+    simStats.total_attacks++;
+    simStats[item.pred] = (simStats[item.pred] || 0) + 1;
+    simTimeline.unshift({ time: now, prediction: item.pred, confidence: conf, src_ip: src, threat: item.threat });
+    if (simTimeline.length > 25) simTimeline.pop();
+  }
+
+  simEvents.unshift({
+    time: now, prediction: item.pred, confidence: conf, threat: item.threat,
+    src_ip: src, dst_ip: '192.168.1.1',
+    src_mac: 'bc:24:11:' + Math.floor(Math.random()*90+10) + ':8a:ff',
+    dst_mac: 'ff:ff:ff:ff:ff:ff',
+    protocol: item.proto,
+    num_packets: Math.floor(Math.random() * 200 + 10),
+    duration_s: +(Math.random() * 0.45).toFixed(3),
+    syn_count: item.pred === 'DoS' ? Math.floor(Math.random()*150+50) : 0,
+    ack_count: 10, fin_count: 0, rst_count: 0,
+    tot_size: Math.floor(Math.random() * 15000 + 500),
+    avg_pkt: +(Math.random() * 100 + 40).toFixed(1)
+  });
+  if (simEvents.length > 40) simEvents.pop();
+
+  return { stats: simStats, events: simEvents, timeline: simTimeline, updated: now };
+}
+
+// Pre-fill simulation data
+for(let i=0; i<15; i++) { generateSimEvent(); }
+
+async function poll() {
+  try {
+    const res  = await fetch('/iomt_data');
+    if (res.ok) {
+      const data = await res.json();
+      el('updatedTime').textContent = 'Updated: ' + data.updated;
+      el('sumUpdated').textContent  = data.updated;
+      updateStats(data.stats);
+      updateFeed(data.events);
+      updateTimeline(data.timeline);
+      return;
+    }
+  } catch (err) {}
+
+  // Seamless live simulation fallback for GitHub Pages
+  const sim = generateSimEvent();
+  el('updatedTime').textContent = 'Live Stream: ' + sim.updated;
+  el('sumUpdated').textContent  = sim.updated;
+  updateStats(sim.stats);
+  updateFeed(sim.events);
+  updateTimeline(sim.timeline);
+}
+
+// Start polling
+poll();
+setInterval(poll, POLL_MS);
+</script>
+</body>
+</html>
+

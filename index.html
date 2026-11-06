@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IoT-NID | ESP32 Intrusion Detection System</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0d14;
+    --bg2: #0f1320;
+    --bg3: #141826;
+    --card: #161c2e;
+    --border: rgba(94, 161, 255, 0.12);
+    --border2: rgba(94, 161, 255, 0.25);
+    --accent: #5ea1ff;
+    --accent2: #38e8a0;
+    --accent3: #ff6b6b;
+    --accent4: #f0a500;
+    --text: #e8edf8;
+    --muted: #8892a4;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Sora', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(94,161,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(94,161,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* NAV */
+  nav {
+    padding: 18px 0;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: rgba(10,13,20,0.92);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+  }
+  nav .inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+  .nav-brand {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+  .nav-links {
+    display: flex;
+    gap: 28px;
+    list-style: none;
+  }
+  .nav-links a {
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    font-family: var(--mono);
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--accent); }
+
+  /* HERO */
+  .hero {
+    padding: 80px 0 60px;
+    text-align: center;
+  }
+  .badge-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+  }
+  .badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+  }
+  .badge-blue { background: rgba(94,161,255,0.12); color: var(--accent); border: 1px solid rgba(94,161,255,0.3); }
+  .badge-green { background: rgba(56,232,160,0.1); color: var(--accent2); border: 1px solid rgba(56,232,160,0.3); }
+  .badge-amber { background: rgba(240,165,0,0.1); color: var(--accent4); border: 1px solid rgba(240,165,0,0.3); }
+  .badge-red { background: rgba(255,107,107,0.1); color: var(--accent3); border: 1px solid rgba(255,107,107,0.3); }
+
+  .hero h1 {
+    font-family: var(--sans);
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+  }
+  .hero h1 span { color: var(--accent); }
+  .hero-sub {
+    font-size: 16px;
+    color: var(--muted);
+    max-width: 580px;
+    margin: 0 auto 32px;
+    line-height: 1.7;
+  }
+  .hero-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: var(--mono);
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #0a0d14;
+  }
+  .btn-primary:hover { background: #7ab3ff; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(94, 161, 255, 0.4); }
+
+  /* STATS ROW */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 60px 0;
+  }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+  .stat-card:hover { border-color: var(--border2); }
+  .stat-num {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+    display: block;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  /* SECTIONS */
+  section { margin: 60px 0; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .section-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    background: rgba(94,161,255,0.08);
+    border: 1px solid var(--border);
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  h2 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  /* ARCHITECTURE DIAGRAM */
+  .arch-diagram {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    overflow-x: auto;
+  }
+  .arch-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    flex-wrap: wrap;
+    row-gap: 16px;
+  }
+  .arch-node {
+    text-align: center;
+    min-width: 110px;
+  }
+  .arch-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 8px;
+    font-size: 22px;
+  }
+  .arch-icon-blue { background: rgba(94,161,255,0.12); border: 1px solid rgba(94,161,255,0.25); }
+  .arch-icon-green { background: rgba(56,232,160,0.1); border: 1px solid rgba(56,232,160,0.25); }
+  .arch-icon-amber { background: rgba(240,165,0,0.1); border: 1px solid rgba(240,165,0,0.3); }
+  .arch-icon-red { background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3); }
+  .arch-node-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    display: block;
+  }
+  .arch-node-sub {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--muted);
+    display: block;
+  }
+  .arch-arrow {
+    color: var(--border2);
+    font-size: 18px;
+    padding: 0 8px;
+    line-height: 1;
+    margin-bottom: 28px;
+    flex-shrink: 0;
+  }
+
+  /* CARDS GRID */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .card:hover { border-color: var(--border2); transform: translateY(-2px); }
+  .card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    margin-bottom: 14px;
+  }
+  .card h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+  }
+  .card p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* DATASET TABLE */
+  .data-table-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead tr {
+    background: rgba(94,161,255,0.05);
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    padding: 12px 16px;
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+  }
+  td {
+    padding: 11px 16px;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: rgba(94,161,255,0.03); }
+  .td-mono { font-family: var(--mono); color: var(--accent2); }
+  .f1-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .f1-track {
+    flex: 1;
+    height: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .f1-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: var(--accent2);
+  }
+
+  /* ATTACK CLASSES */
+  .attack-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .attack-chip {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    transition: border-color 0.2s;
+  }
+  .attack-chip:hover { border-color: var(--border2); }
+  .attack-chip-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 4px;
+  }
+  .attack-chip-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    display: block;
+  }
+  .attack-chip-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+  }
+
+  /* TEAM */
+  .team-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .team-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+  .team-card:hover { border-color: var(--border2); }
+  .avatar {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 auto 12px;
+    font-family: var(--mono);
+  }
+  .team-name { font-size: 15px; font-weight: 600; margin-bottom: 3px; }
+  .team-role { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+  .team-id { font-size: 11px; color: var(--accent); font-family: var(--mono); margin-top: 4px; }
+
+  /* CODE BLOCK */
+  .code-block {
+    background: #080b12;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.7;
+    overflow-x: auto;
+    position: relative;
+  }
+  .code-block .filename {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    letter-spacing: 0.04em;
+  }
+  .code-line { display: block; }
+  .c-comment { color: #4e5c72; }
+  .c-key { color: #5ea1ff; }
+  .c-str { color: #38e8a0; }
+  .c-num { color: #f0a500; }
+  .c-fn { color: #c792ea; }
+
+  /* DASHBOARD LINK */
+  .dashboard-card {
+    background: linear-gradient(135deg, rgba(94,161,255,0.08) 0%, rgba(56,232,160,0.06) 100%);
+    border: 1px solid rgba(94,161,255,0.2);
+    border-radius: 16px;
+    padding: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+  }
+  .dashboard-card h3 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+  .dashboard-card p { font-size: 13px; color: var(--muted); }
+  .live-dot {
+    width: 9px;
+    height: 9px;
+    background: var(--accent2);
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.3; transform: scale(0.85); }
+  }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 32px 0;
+    margin-top: 80px;
+  }
+  .footer-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .footer-text { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+  .footer-links {
+    display: flex;
+    gap: 16px;
+  }
+  .footer-links a {
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .footer-links a:hover { color: var(--accent); }
+
+  /* SEPARATOR */
+  .sep {
+    height: 1px;
+    background: var(--border);
+    margin: 60px 0;
+  }
+
+  @media (max-width: 680px) {
+    .hero h1 { font-size: 28px; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .cards-grid { grid-template-columns: 1fr; }
+    .attack-grid { grid-template-columns: repeat(2, 1fr); }
+    .team-row { grid-template-columns: 1fr; }
+    .arch-flow { flex-direction: column; align-items: center; }
+    .arch-arrow { transform: rotate(90deg); margin-bottom: 0; }
+    .dashboard-card { flex-direction: column; }
+    nav .inner { flex-direction: column; gap: 12px; }
+    .nav-links { gap: 16px; flex-wrap: wrap; justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <span class="nav-brand">[ IoT-NID System ]</span>
+    <ul class="nav-links">
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#architecture">Architecture</a></li>
+      <li><a href="#models">Models</a></li>
+      <li><a href="#attacks">Attacks</a></li>
+      <li><a href="#team">Team</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- HERO -->
+  <section class="hero" id="overview">
+    <div class="badge-row">
+      <span class="badge badge-blue">Final Year Project</span>
+      <span class="badge badge-green">ESP32-S3</span>
+      <span class="badge badge-amber">LightGBM + TinyML</span>
+      <span class="badge badge-red">CIC-IoMT 2024</span>
+    </div>
+    <h1>IoT-Enabled Network <span>Intrusion Detection</span><br>and Alert System</h1>
+    <p class="hero-sub">
+      A dual-track IDS combining server-side LightGBM classification with on-device TinyML inference on ESP32-S3 — detecting 5 IoT attack classes in real-time with ~2ms edge latency.
+    </p>
+    <div class="hero-buttons">
+      <!-- DIRECT LINK TO LIVE DASHBOARD -->
+      <a href="dashboard.html" target="_blank" class="btn btn-primary" id="btn-hero-dashboard">
+        🔗 Live IoMT Dashboard ↗
+      </a>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <span class="stat-num">~2ms</span>
+      <span class="stat-label">Edge Inference</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num">5</span>
+      <span class="stat-label">Attack Classes</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num">7</span>
+      <span class="stat-label">Custom L2 Attacks</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num">2</span>
+      <span class="stat-label">Datasets Used</span>
+    </div>
+  </div>
+
+  <div class="sep"></div>
+
+  <!-- ARCHITECTURE -->
+  <section id="architecture">
+    <div class="section-header">
+      <span class="section-tag">Architecture</span>
+      <h2>System Pipeline</h2>
+    </div>
+    <div class="arch-diagram">
+      <div class="arch-flow">
+        <div class="arch-node">
+          <div class="arch-icon arch-icon-blue">📡</div>
+          <span class="arch-node-title">ESP32-S3</span>
+          <span class="arch-node-sub">Promiscuous mode</span>
+        </div>
+        <span class="arch-arrow">→</span>
+        <div class="arch-node">
+          <div class="arch-icon arch-icon-amber">🔍</div>
+          <span class="arch-node-title">Feature Extract</span>
+          <span class="arch-node-sub">Layer 2 frames</span>
+        </div>
+        <span class="arch-arrow">→</span>
+        <div class="arch-node">
+          <div class="arch-icon arch-icon-green">🧠</div>
+          <span class="arch-node-title">TinyML Model</span>
+          <span class="arch-node-sub">TFLite on-device</span>
+        </div>
+        <span class="arch-arrow">→</span>
+        <div class="arch-node">
+          <div class="arch-icon arch-icon-red">🚨</div>
+          <span class="arch-node-title">MQTT Alert</span>
+          <span class="arch-node-sub">HTTP pipeline</span>
+        </div>
+        <span class="arch-arrow">→</span>
+        <div class="arch-node">
+          <div class="arch-icon arch-icon-blue">📊</div>
+          <span class="arch-node-title">Dashboard</span>
+          <span class="arch-node-sub">Live IoMT Cloud</span>
+        </div>
+      </div>
+      <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div>
+          <p style="font-size: 12px; color: var(--accent); font-family: var(--mono); margin-bottom: 4px;">Track 1 — IoMT Server-Side</p>
+          <p style="font-size: 13px; color: var(--muted);">LightGBM classifier trained on CIC-IoMT 2024 dataset with 5 attack classes. Hosted 24/7 on Cloud.</p>
+        </div>
+        <div>
+          <p style="font-size: 12px; color: var(--accent2); font-family: var(--mono); margin-bottom: 4px;">Track 2 — Edge (TinyML)</p>
+          <p style="font-size: 13px; color: var(--muted);">Compressed TFLite model on ESP32-S3 for real-time on-device inference at ~2ms latency.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODELS -->
+  <section id="models">
+    <div class="section-header">
+      <span class="section-tag">ML Models</span>
+      <h2>Classification Performance</h2>
+    </div>
+    <div class="data-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Attack Class</th>
+            <th>Dataset</th>
+            <th>F1-Score</th>
+            <th>Performance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span style="color: var(--accent3);">●</span> DoS / DDoS</td>
+            <td class="td-mono">CIC-IoMT 2024</td>
+            <td class="td-mono">0.97</td>
+            <td><div class="f1-bar"><div class="f1-track"><div class="f1-fill" style="width: 97%;"></div></div><span style="font-size: 12px; color: var(--muted);">97%</span></div></td>
+          </tr>
+          <tr>
+            <td><span style="color: var(--accent4);">●</span> Mirai Botnet</td>
+            <td class="td-mono">CIC-IoMT 2024</td>
+            <td class="td-mono">0.99</td>
+            <td><div class="f1-bar"><div class="f1-track"><div class="f1-fill" style="width: 99%;"></div></div><span style="font-size: 12px; color: var(--muted);">99%</span></div></td>
+          </tr>
+          <tr>
+            <td><span style="color: var(--accent);">●</span> Reconnaissance</td>
+            <td class="td-mono">CIC-IoMT 2024</td>
+            <td class="td-mono">0.96</td>
+            <td><div class="f1-bar"><div class="f1-track"><div class="f1-fill" style="width: 96%;"></div></div><span style="font-size: 12px; color: var(--muted);">96%</span></div></td>
+          </tr>
+          <tr>
+            <td><span style="color: var(--accent2);">●</span> MQTT Attacks</td>
+            <td class="td-mono">CIC-IoMT 2024</td>
+            <td class="td-mono">0.95</td>
+            <td><div class="f1-bar"><div class="f1-track"><div class="f1-fill" style="width: 95%;"></div></div><span style="font-size: 12px; color: var(--muted);">95%</span></div></td>
+          </tr>
+          <tr>
+            <td><span style="color: #c792ea;">●</span> Benign Traffic</td>
+            <td class="td-mono">CIC-IoMT 2024</td>
+            <td class="td-mono">0.98</td>
+            <td><div class="f1-bar"><div class="f1-track"><div class="f1-fill" style="width: 98%;"></div></div><span style="font-size: 12px; color: var(--muted);">98%</span></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="cards-grid" style="margin-top: 16px;">
+      <div class="card">
+        <div class="card-icon arch-icon-blue">⚡</div>
+        <h3>LightGBM Classifier</h3>
+        <p>Gradient boosting model trained on CIC-IoMT 2024. Handles class imbalance via SMOTE oversampling. Deployed via Flask REST API.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon arch-icon-green">🧬</div>
+        <h3>TFLite / TinyML</h3>
+        <p>Quantized neural network compiled to .tflite, loaded onto ESP32-S3 tensor arena. ~2ms inference latency per packet with confidence threshold tuning.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon arch-icon-amber">📦</div>
+        <h3>Custom Dataset</h3>
+        <p>Real WiFi packets captured with ESP32 in promiscuous mode. 7 injected Layer 2 attack types (KRACK, deauth floods, beacon spam, etc.) on local testbed.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon arch-icon-red">🔔</div>
+        <h3>MQTT Alert Pipeline</h3>
+        <p>On detection, ESP32 publishes alert payloads via MQTT broker. Dashboard receives HTTP POST with attack type, confidence score, frame metadata, and timestamp.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ATTACK CLASSES -->
+  <section id="attacks">
+    <div class="section-header">
+      <span class="section-tag">Custom Dataset</span>
+      <h2>Layer 2 Attack Types</h2>
+    </div>
+    <div class="attack-grid">
+      <div class="attack-chip">
+        <span class="attack-chip-label">Attack 01</span>
+        <span class="attack-chip-name"><span class="attack-chip-dot" style="background: var(--accent3);"></span>Deauth Flood</span>
+      </div>
+      <div class="attack-chip">
+        <span class="attack-chip-label">Attack 02</span>
+        <span class="attack-chip-name"><span class="attack-chip-dot" style="background: var(--accent4);"></span>KRACK</span>
+      </div>
+      <div class="attack-chip">
+        <span class="attack-chip-label">Attack 03</span>
+        <span class="attack-chip-name"><span class="attack-chip-dot" style="background: var(--accent);"></span>Beacon Spam</span>
+      </div>
+      <div class="attack-chip">
+        <span class="attack-chip-label">Attack 04</span>
+        <span class="attack-chip-name"><span class="attack-chip-dot" style="background: var(--accent2);"></span>Probe Flood</span>
+      </div>
+      <div class="attack-chip">
+        <span class="attack-chip-label">Attack 05</span>
+        <span class="attack-chip-name"><span class="attack-chip-dot" style="background: #c792ea;"></span>ARP Spoof</span>
+      </div>
+      <div class="attack-chip">
+        <span class="attack-chip-label">Attack 06</span>
+        <span class="attack-chip-name"><span class="attack-chip-dot" style="background: #ff9f43;"></span>Evil Twin AP</span>
+      </div>
+      <div class="attack-chip" style="grid-column: span 1;">
+        <span class="attack-chip-label">Attack 07</span>
+        <span class="attack-chip-name"><span class="attack-chip-dot" style="background: #54a0ff;"></span>MGMT Frame Inject</span>
+      </div>
+    </div>
+
+    <!-- CODE SNIPPET -->
+    <div class="code-block" style="margin-top: 20px;">
+      <div class="filename">esp32_capture.ino — promiscuous mode snippet</div>
+      <code>
+        <span class="code-line"><span class="c-comment">// Enable promiscuous mode for packet capture</span></span>
+        <span class="code-line"><span class="c-fn">esp_wifi_set_promiscuous</span>(<span class="c-num">true</span>);</span>
+        <span class="code-line"><span class="c-fn">esp_wifi_set_promiscuous_rx_cb</span>(&amp;sniffer_callback);</span>
+        <span class="code-line"></span>
+        <span class="code-line"><span class="c-key">void</span> <span class="c-fn">sniffer_callback</span>(<span class="c-key">void</span>* buf, wifi_promiscuous_pkt_type_t type) {</span>
+        <span class="code-line">  <span class="c-key">if</span> (type == <span class="c-str">WIFI_PKT_DATA</span> || type == <span class="c-str">WIFI_PKT_MGMT</span>) {</span>
+        <span class="code-line">    <span class="c-comment">// extract features → run TFLite inference</span></span>
+        <span class="code-line">    <span class="c-fn">runInference</span>(packet_features);</span>
+        <span class="code-line">  }</span>
+        <span class="code-line">}</span>
+      </code>
+    </div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section>
+    <div class="section-header">
+      <span class="section-tag">Live System</span>
+      <h2>Dashboard</h2>
+    </div>
+    <div class="dashboard-card">
+      <div>
+        <h3><span class="live-dot"></span>Live IoMT IDS Dashboard</h3>
+        <p>Real-time intrusion detection alerts, classification metrics, attack timeline, and network health analytics.</p>
+        <div style="margin-top: 14px;">
+          <!-- ONLY ONE LIVE IOMT DASHBOARD LINK -->
+          <a href="dashboard.html" target="_blank" class="btn btn-primary" style="font-size: 13px; padding: 10px 22px;">
+            ⚡ Open Live IoMT Dashboard ↗
+          </a>
+        </div>
+      </div>
+      <div style="font-size: 52px; opacity: 0.4; flex-shrink: 0;">🛡️</div>
+    </div>
+  </section>
+
+  <!-- TEAM -->
+  <section id="team">
+    <div class="section-header">
+      <span class="section-tag">Team</span>
+      <h2>Project Members</h2>
+    </div>
+    <div class="team-row">
+      <div class="team-card">
+        <div class="avatar" style="background: rgba(94,161,255,0.1); color: var(--accent);">II</div>
+        <div class="team-name">Inshal Ikram</div>
+        <div class="team-role">Developer / ML Engineer</div>
+        <div class="team-id">ID: 222006</div>
+      </div>
+      <div class="team-card">
+        <div class="avatar" style="background: rgba(56,232,160,0.1); color: var(--accent2);">MM</div>
+        <div class="team-name">Maryam Mughal</div>
+        <div class="team-role">Team Member</div>
+        <div class="team-id">ID: 222020</div>
+      </div>
+      <div class="team-card">
+        <div class="avatar" style="background: rgba(240,165,0,0.1); color: var(--accent4);">UA</div>
+        <div class="team-name">Dr. Usama Ahmed</div>
+        <div class="team-role">Supervisor</div>
+        <div class="team-id">GCUF</div>
+      </div>
+    </div>
+    <p style="font-size: 13px; color: var(--muted); margin-top: 16px; text-align: center; font-family: var(--mono);">
+      BS Software Engineering · Session 2022–2026 · Government College University Faisalabad
+    </p>
+  </section>
+
+</div>
+
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <span class="footer-text">© 2026 — IoT-NID System · GCUF · BS-SE 2022–2026</span>
+      <div class="footer-links">
+        <a href="dashboard.html" target="_blank">Live Dashboard</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
