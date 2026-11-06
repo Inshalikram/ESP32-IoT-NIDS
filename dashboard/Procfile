@@ -1,0 +1,1 @@
+web: gunicorn iomt_app:app
